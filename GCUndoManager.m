@@ -851,7 +851,6 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 			[self endUndoGrouping];
 			[self setUndoManagerState:kGCUndoCollectingTasks];
 			
-			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
 			[notificationCenter postNotificationName:NSUndoManagerDidUndoChangeNotification object:self];
 		}
 	}
@@ -896,8 +895,7 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 			[self popRedo];
 			[self endUndoGrouping];
 			[self setUndoManagerState:kGCUndoCollectingTasks];
-
-			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+			
 			[notificationCenter postNotificationName:NSUndoManagerDidRedoChangeNotification object:self];
 		}
 	}
