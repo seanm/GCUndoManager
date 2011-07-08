@@ -3,7 +3,7 @@
 //  GCDrawKit
 //
 //  Created by graham on 4/12/09.
-//  Copyright 2009 Apptree.net. All rights reserved.
+//  Copyright 2009-2011 Apptree.net. All rights reserved.
 //
 
 // VERSION HISTORY:
@@ -188,11 +188,15 @@ GCUndoTaskCoalescingKind;
 
 @end
 
-// 10.7 defines this constant, but it's not present in 10.6 and earlier. On those systems, GCUndoManager declares the constant and
-// sends this notification as well. This is necessary for NSDocument compatibility on 10.7, but may be used on earlier systems if
-// you wish. The notification is only sent while collecting tasks, not when undoing or redoing.
+// This constant is provided by the 10.7 SDK. For 10.6 SDK and earlier, it is defined here so this will work with all SDKs.
+// GCUndoManager sends this notification as well. This is necessary for NSDocument compatibility on 10.7, but may be used on
+// earlier systems if you wish. The notification is only sent while collecting tasks, not when undoing or redoing.
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 extern NSString* const NSUndoManagerDidCloseUndoGroupNotification;
+
+#endif
 
 #pragma mark -
 

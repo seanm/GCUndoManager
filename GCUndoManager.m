@@ -3,14 +3,14 @@
 //  GCDrawKit
 //
 //  Created by graham on 4/12/09.
-//  Copyright 2009 Apptree.net. All rights reserved.
+//  Copyright 2009-2011 Apptree.net. All rights reserved.
 //
 
 #import "GCUndoManager.h"
 
-// On 10.7, this constant is supplied by NSUndoManager. For 10.6 and earlier, it is also defined here so this will work with all SDKs
+// This constant is provided by the 10.7 SDK. For 10.6 SDK and earlier, it is defined here so this will work with all SDKs.
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_6
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidCloseUndoGroupNotification";
 
