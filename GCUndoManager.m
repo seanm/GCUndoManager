@@ -85,7 +85,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	
 	++mGroupLevel;
 	
-	[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
+	NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+	[notificationCenter postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
 }
 
 
@@ -124,7 +125,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 					// this notification is not exactly in line with documentation, but it correctly ensures that NSDocument's change count
 					// management is correct. I suspect that the documentation is in error.
 					
-					[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerWillCloseUndoGroupNotification object:self];
+					NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+					[notificationCenter postNotificationName:NSUndoManagerWillCloseUndoGroupNotification object:self];
 				}
 			}
 			@catch( NSException* excp )
@@ -164,7 +166,10 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 		// see: https://devforums.apple.com/thread/110036?tstart=0
 		
 		if([self undoManagerState] == kGCUndoCollectingTasks)
-			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self];
+		{
+			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+			[notificationCenter postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self];
+		}
 	}
 }
 
@@ -607,7 +612,7 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 }
 
 
-- (GCUndoTaskCoalescingKind) coalescingKind;
+- (GCUndoTaskCoalescingKind) coalescingKind
 {
 	return mCoalKind;
 }
@@ -808,7 +813,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	
 	if([self numberOfUndoActions] > 0 && ![[self peekUndo] isEmpty])
 	{
-		[[NSNotificationCenter defaultCenter] postNotificationName:	NSUndoManagerWillUndoChangeNotification object:self];
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter postNotificationName:NSUndoManagerWillUndoChangeNotification object:self];
 		
 		[self setUndoManagerState:kGCUndoIsUndoing];
 		[self beginUndoGrouping];
@@ -845,7 +851,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 			[self endUndoGrouping];
 			[self setUndoManagerState:kGCUndoCollectingTasks];
 			
-			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidUndoChangeNotification object:self];
+			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+			[notificationCenter postNotificationName:NSUndoManagerDidUndoChangeNotification object:self];
 		}
 	}
 }
@@ -858,7 +865,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	
 	if([self numberOfRedoActions] > 0 && ![[self peekUndo] isEmpty])
 	{
-		[[NSNotificationCenter defaultCenter] postNotificationName:	NSUndoManagerWillRedoChangeNotification object:self];
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter postNotificationName:NSUndoManagerWillRedoChangeNotification object:self];
 		
 		[self setUndoManagerState:kGCUndoIsRedoing];
 		[self beginUndoGrouping];
@@ -889,7 +897,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 			[self endUndoGrouping];
 			[self setUndoManagerState:kGCUndoCollectingTasks];
 
-			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidRedoChangeNotification object:self];
+			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+			[notificationCenter postNotificationName:NSUndoManagerDidRedoChangeNotification object:self];
 		}
 	}
 }
@@ -903,7 +912,7 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	{
 		GCUndoGroup* group = [[[self peekUndo] retain] autorelease];
 		[mUndoStack removeLastObject];
-				
+		
 		return group;
 	}
 	else
@@ -949,7 +958,8 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	if( !mIsInCheckpoint )
 	{
 		mIsInCheckpoint = YES;
-		[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerCheckpointNotification object:self];
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter postNotificationName:NSUndoManagerCheckpointNotification object:self];
 		mIsInCheckpoint = NO;
 	}
 }
@@ -1434,7 +1444,7 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ target = <%@ 0x%x>, selector: %@", [super description], NSStringFromClass([[self target] class]), [self target], NSStringFromSelector([mInvocation selector])];
+	return [NSString stringWithFormat:@"%@ target = <%@ %p>, selector: %@", [super description], NSStringFromClass([[self target] class]), [self target], NSStringFromSelector([mInvocation selector])];
 }
 
 @end

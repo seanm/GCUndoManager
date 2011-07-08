@@ -53,7 +53,7 @@ GCUndoTaskCoalescingKind;
 	NSInteger			mEnableLevel;			// enable ref count, 0 = enabled.
 	NSUInteger			mChangeCount;			// count of changes (submitting any task increments this)
 	GCUndoManagerState	mState;					// current undo manager state
-	GCUndoTaskCoalescingKind mCoalKind;			// coalescing behaviour - match on emost recent task or all tasks in group
+	GCUndoTaskCoalescingKind mCoalKind;			// coalescing behaviour - match on most recent task or all tasks in group
 	BOOL				mGroupsByEvent;			// YES if automatic grouping occurs for the main loop event cycle
 	BOOL				mCoalescing;			// YES if consecutive tasks are coalesced
 	BOOL				mAutoDeleteEmptyGroups;	// YES if empty groups are automatically removed from the stack
@@ -275,11 +275,11 @@ extern NSString* const NSUndoManagerDidCloseUndoGroupNotification;
 
 /*
  
-This class is a public API-compatible replacement for NSUndoManager. It can only be used with Appkit however, not with other types of executable.
+This class is a public API-compatible replacement for NSUndoManager. It can only be used with AppKit however, not with other types of executables.
  
 The point of this is to provide an undo manager whose source is openly readable, available and debuggable. It also does not exhibit the
  NSUndoManager bug whereby opening and closing a group without adding any tasks creates an empty task. That substantially simplifies how
- it can be used in an interactive situation such as handling the mouse down/drag/up triplet of views.
+ it can be used in an interactive situation such as handling the mouse down/drag/up triplet of events.
  
  This also includes task coalescing whereby consecutive tasks having the same target and selector are only submitted to the stack once. This
  helps a lot with interactive tasks involving multiple events such as mouse dragging, so that undo does not replay all the intermediate steps.
