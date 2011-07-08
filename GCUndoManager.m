@@ -8,6 +8,14 @@
 
 #import "GCUndoManager.h"
 
+// On 10.7, this constant is supplied by NSUndoManager. For 10.6 and earlier, it is also defined here so this will work with all SDKs
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_6
+
+NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidCloseUndoGroupNotification";
+
+#endif
+
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
 // method, so subclasses still work when -forwardInvocaton: is overridden.
@@ -102,36 +110,45 @@
 			// If no tasks were submitted, no bogus empty undo task remains on the stack. In addition no closure notification is sent
 			// so as far as the client is concerned, it just never happened.
 			
-			if([self automaticallyDiscardsEmptyGroups] && [[self currentGroup] isEmpty])
+			@try
 			{
-				if([self isUndoing])
-					[self popRedo];
-				else
-					[self popUndo];
+				if([self automaticallyDiscardsEmptyGroups] && [[self currentGroup] isEmpty])
+				{
+					if([self isUndoing])
+						[self popRedo];
+					else
+						[self popUndo];
+				}
+				else if([self undoManagerState] == kGCUndoCollectingTasks)
+				{
+					// this notification is not exactly in line with documentation, but it correctly ensures that NSDocument's change count
+					// management is correct. I suspect that the documentation is in error.
+					
+					[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerWillCloseUndoGroupNotification object:self];
+				}
 			}
-			else if([self undoManagerState] == kGCUndoCollectingTasks)
+			@catch( NSException* excp )
 			{
-				// this notification is not exactly in line with documentation, but it correctly ensures that NSDocument's change count
-				// management is correct. I suspect that the documentation is in error.
-				
-				[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerWillCloseUndoGroupNotification object:self];
+				NSLog(@"an exception occurred while closing an undo group - ignored: %@", excp );
 			}
-			
-			//NSLog(@"top level group closed: %@", mOpenGroupRef);
-			
-			mOpenGroupRef = nil;
-			
-			// keep the number of undo tasks at the top level limited to the undoLevels
-			// by discarding the oldest tasks
-			
-			if([self levelsOfUndo] > 0 && !mIsRemovingTargets)
+			@finally
 			{
-				mIsRemovingTargets = YES;
+				//NSLog(@"top level group closed: %@", mOpenGroupRef);
 				
-				while([self numberOfUndoActions] > [self levelsOfUndo])
-					[mUndoStack removeObjectAtIndex:0];
+				mOpenGroupRef = nil;
 				
-				mIsRemovingTargets = NO;
+				// keep the number of undo tasks at the top level limited to the undoLevels
+				// by discarding the oldest tasks
+				
+				if([self levelsOfUndo] > 0 && !mIsRemovingTargets)
+				{
+					mIsRemovingTargets = YES;
+					
+					while([self numberOfUndoActions] > [self levelsOfUndo])
+						[mUndoStack removeObjectAtIndex:0];
+					
+					mIsRemovingTargets = NO;
+				}
 			}
 		}
 		else
@@ -142,6 +159,12 @@
 			
 			THROW_IF_FALSE( mOpenGroupRef != nil, @"nested group could not be restored - bad parent group ref");
 		}
+		
+		// this notification is new for 10.7 - according to inside info, NSUndoManager only posts it while doing, not otherwise
+		// see: https://devforums.apple.com/thread/110036?tstart=0
+		
+		if([self undoManagerState] == kGCUndoCollectingTasks)
+			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self];
 	}
 }
 
@@ -213,6 +236,8 @@
 
 - (void)				enableUndoRegistration
 {
+	THROW_IF_FALSE( mEnableLevel < 0, @"inconsistent state - undo enabled when not previously disabled");
+	
 	++mEnableLevel;
 }
 
@@ -227,7 +252,7 @@
 
 - (BOOL)				isUndoRegistrationEnabled
 {
-	return mEnableLevel == 0;
+	return mEnableLevel >= 0;
 }
 
 
@@ -318,6 +343,12 @@
 
 - (void)				setActionName:(NSString*) actionName
 {
+	// for compatibility with NSUndoManager, conditionally open a group - this allows an action name to be set
+	// before any task is submitted. I think it's incorrect that tasks are nameable before being created and should be
+	// named at the end - but if someone's code does that, this allows it to work.
+	
+	//[self conditionallyBeginUndoGrouping];
+	
 	if([self isUndoing])
 		[[self peekRedo] setActionName:actionName];
 	else
@@ -476,9 +507,14 @@
 		
 		while(( task = [iter nextObject]))
 		{
-			[task removeTasksWithTarget:target];
-			if([task isEmpty])
+			[task removeTasksWithTarget:target undoManager:self];
+			
+			// delete groups that become empty unless it's the current group
+			
+			if([task isEmpty] && task != [self currentGroup])
+			{
 				[mUndoStack removeObject:task];
+			}
 		}
 		
 		[temp release];
@@ -488,9 +524,14 @@
 		
 		while(( task = [iter nextObject]))
 		{
-			[task removeTasksWithTarget:target];
-			if([task isEmpty])
+			[task removeTasksWithTarget:target undoManager:self];
+			
+			// delete groups that become empty unless it's the current group
+			
+			if([task isEmpty] && task != [self currentGroup])
+			{
 				[mRedoStack removeObject:task];
+			}
 		}
 		
 		[temp release];
@@ -772,25 +813,40 @@
 		[self setUndoManagerState:kGCUndoIsUndoing];
 		[self beginUndoGrouping];
 		
-		// the group is autoreleased so its targets will remain retained at least until the end of the event cycle.
+		// the group's targets will remain retained at least until the end of the event cycle.
 		
-		GCUndoGroup* group = [self popUndo];
+		GCUndoGroup* group = [self peekUndo];
 		
 		//NSLog(@"------ undoing ------");
 		
-		[group perform];
-		
-		// by default copy the action name to the top of the redo stack - client code might
-		// change it but if not at least it's set to the same name initially. Safe because this
-		// was called between begin/end group, and that method has added an empty group to the
-		// relevant stack. If no tasks were actually submitted, the group will be discarded
-		
-		[[self peekRedo] setActionName:[group actionName]];
-		
-		[self endUndoGrouping];
-		[self setUndoManagerState:kGCUndoCollectingTasks];
-		
-		[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidUndoChangeNotification object:self];
+		@try
+		{
+			[group perform];
+		}
+		@catch( NSException* excp )
+		{
+			NSLog(@"an exception occurred while performing Undo - undo manager will be cleaned up: %@", excp );
+			
+			@throw;
+		}
+		@finally
+		{
+			// by default copy the action name to the top of the redo stack - client code might
+			// change it but if not at least it's set to the same name initially. Safe because this
+			// was called between begin/end group, and that method has added an empty group to the
+			// relevant stack. If no tasks were actually submitted, the group will be discarded
+			
+			if([self isUndoRegistrationEnabled])
+				[[self peekRedo] setActionName:[group actionName]];
+			
+			// done with the undo task so pop it
+			
+			[self popUndo];
+			[self endUndoGrouping];
+			[self setUndoManagerState:kGCUndoCollectingTasks];
+			
+			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidUndoChangeNotification object:self];
+		}
 	}
 }
 
@@ -807,21 +863,34 @@
 		[self setUndoManagerState:kGCUndoIsRedoing];
 		[self beginUndoGrouping];
 		
-		GCUndoGroup* group = [self popRedo];
+		GCUndoGroup* group = [self peekRedo];
 		
 		//NSLog(@"------ redoing ------");
-
-		[group perform];
-
-		// by default copy the action name to the top of the undo stack - client code might
-		// change it but if not at least it's set to the same name initially
 		
-		[[self peekUndo] setActionName:[group actionName]];
+		@try
+		{
+			[group perform];
+		}
+		@catch( NSException* excp )
+		{
+			NSLog(@"an exception occurred while performing Redo - undo manager will be cleaned up: %@", excp );
+			
+			@throw;
+		}
+		@finally
+		{
+			// by default copy the action name to the top of the undo stack - client code might
+			// change it but if not at least it's set to the same name initially
+			
+			if([self isUndoRegistrationEnabled])
+				[[self peekUndo] setActionName:[group actionName]];
+			
+			[self popRedo];
+			[self endUndoGrouping];
+			[self setUndoManagerState:kGCUndoCollectingTasks];
 
-		[self endUndoGrouping];
-		[self setUndoManagerState:kGCUndoCollectingTasks];
-
-		[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidRedoChangeNotification object:self];
+			[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerDidRedoChangeNotification object:self];
+		}
 	}
 }
 
@@ -834,7 +903,7 @@
 	{
 		GCUndoGroup* group = [[[self peekUndo] retain] autorelease];
 		[mUndoStack removeLastObject];
-		
+				
 		return group;
 	}
 	else
@@ -874,10 +943,15 @@
 - (void)				checkpoint
 {
 	// sends the checkpoint notification. Frankly, this seems very vague and called at all sorts of random points, so it's unclear
-	// exactly what the notification is meant to do. The GNUStep implementation also sends it more than the current documentation
+	// exactly what the notification is meant to signify. The GNUStep implementation also sends it more than the current documentation
 	// for NSUndoManager indicates. This implementation follows the current documentation.
 	
-	[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerCheckpointNotification object:self];
+	if( !mIsInCheckpoint )
+	{
+		mIsInCheckpoint = YES;
+		[[NSNotificationCenter defaultCenter] postNotificationName:NSUndoManagerCheckpointNotification object:self];
+		mIsInCheckpoint = NO;
+	}
 }
 
 
@@ -897,7 +971,8 @@
 
 - (void)				reset
 {
-	// puts the undo manager back to its default state. It does not remove anything from the stacks, but will close all groups.
+	// puts the undo manager back to its default state. It does not remove anything from the stacks, but will close all groups and re-enable
+	// the UM.
 	
 	[[NSRunLoop mainRunLoop] cancelPerformSelectorsWithTarget:self];
 	
@@ -906,6 +981,7 @@
 	mGroupLevel = 0;
 	mCoalKind = kGCCoalesceLastTask;
 	mGroupsByEvent = YES;
+	mEnableLevel = 0;
 	[self setUndoManagerState:kGCUndoCollectingTasks];
 }
 
@@ -1005,7 +1081,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ g-level = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoStack], [self redoStack]];
+	return [NSString stringWithFormat:@"%@ g-level = %d, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
 }
 
 
@@ -1134,7 +1210,7 @@
 }
 
 
-- (void)				removeTasksWithTarget:(id) aTarget
+- (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um
 {
 	// Removes all tasks in this group and any subgroups having the given target.
 	// It also removes any subgroups that become empty as a result.
@@ -1147,9 +1223,9 @@
 	{
 		if([task respondsToSelector:_cmd])
 		{
-			[(GCUndoGroup*)task removeTasksWithTarget:aTarget];
+			[(GCUndoGroup*)task removeTasksWithTarget:aTarget undoManager:um];
 			
-			if([(GCUndoGroup*)task isEmpty])
+			if([(GCUndoGroup*)task isEmpty] && [um currentGroup] != task)
 				[mTasks removeObject:task];
 		}
 		else if([task respondsToSelector:@selector(target)])
@@ -1215,6 +1291,8 @@
 
 - (void)				dealloc
 {
+	//NSLog(@"deallocating undo group %@", self );
+	
 	[mTasks release];
 	[mActionName release];
 	[super dealloc];

@@ -9,6 +9,8 @@
 // VERSION HISTORY:
 // 2009/12/09 - first release
 // 2010/01/01 - fixes for Core Data, optional retaining of targets, and prevention of reentrancy when removing tasks
+// 2011/01/11 - fix to ensure submitting tasks in response to a checkpoint notification is correctly handled
+// 2011/07/08 - added NSUndoManagerDidCloseUndoGroupNotification for 10.7 (Lion) compatibility
 
 #import <Cocoa/Cocoa.h>
 
@@ -57,6 +59,7 @@ GCUndoTaskCoalescingKind;
 	BOOL				mAutoDeleteEmptyGroups;	// YES if empty groups are automatically removed from the stack
 	BOOL				mRetainsTargets;		// YES if invocation targets are retained
 	BOOL				mIsRemovingTargets;		// YES during stack clean-up to prevent re-entrancy
+	BOOL				mIsInCheckpoint;		// YES during the notification processing for a checkpoint
 }
 
 // NSUndoManager compatible API
@@ -120,6 +123,7 @@ GCUndoTaskCoalescingKind;
 
 - (void)				_processEndOfEventNotification:(NSNotification*) note;
 
+#pragma mark -
 // additional API
 // automatic empty group discarding (default = YES)
 
@@ -135,7 +139,7 @@ GCUndoTaskCoalescingKind;
 - (void)				setCoalescingKind:(GCUndoTaskCoalescingKind) kind;
 - (GCUndoTaskCoalescingKind) coalescingKind;
 
-// retaining targets
+// retaining targets (default = NO)
 
 - (void)				setRetainsTargets:(BOOL) retainsTargets;
 - (BOOL)				retainsTargets;
@@ -146,6 +150,7 @@ GCUndoTaskCoalescingKind;
 - (NSUInteger)			changeCount;
 - (void)				resetChangeCount;
 
+#pragma mark -
 // internal methods - public to permit overriding
 
 - (GCUndoGroup*)		currentGroup;
@@ -183,7 +188,11 @@ GCUndoTaskCoalescingKind;
 
 @end
 
+// 10.7 defines this constant, but it's not present in 10.6 and earlier. On those systems, GCUndoManager declares the constant and
+// sends this notification as well. This is necessary for NSDocument compatibility on 10.7, but may be used on earlier systems if
+// you wish. The notification is only sent while collecting tasks, not when undoing or redoing.
 
+extern NSString* const NSUndoManagerDidCloseUndoGroupNotification;
 
 #pragma mark -
 
@@ -224,7 +233,7 @@ GCUndoTaskCoalescingKind;
 - (NSArray*)			tasksWithTarget:(id) target selector:(SEL) selector;
 - (BOOL)				isEmpty;
 
-- (void)				removeTasksWithTarget:(id) aTarget;
+- (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um;
 - (void)				setActionName:(NSString*) name;
 - (NSString*)			actionName;
 
@@ -234,7 +243,7 @@ GCUndoTaskCoalescingKind;
 #pragma mark -
 
 // concrete tasks wrap the NSInvocation which embodies the actual method call that is made when an action is undone or redone.
-// Concrete tasks own the invocation, which is set to always retain its target and arguments.
+// Concrete tasks own the invocation, which is set to optionally retain its target and arguments.
 
 @interface GCConcreteUndoTask : GCUndoTask
 {

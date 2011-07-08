@@ -29,5 +29,6 @@
 - (IBAction)		colourAction:(id) sender;
 - (IBAction)		umTypeAction:(id) sender;
 - (IBAction)		logUMDescription:(id) sender;
+- (IBAction)		explodeUndoAction:(id) sender;
 
 @end

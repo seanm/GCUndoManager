@@ -133,6 +133,14 @@
 }
 
 
+- (IBAction)		explodeUndoAction:(id) sender
+{
+	if([[self undoManager] respondsToSelector:@selector(explodeTopUndoAction)])
+		[(GCUndoManager*)[self undoManager] explodeTopUndoAction];
+	
+}
+
+
 - (void)			windowControllerDidLoadNib:(NSWindowController *) aController
 {
     [super windowControllerDidLoadNib:aController];
