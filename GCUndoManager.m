@@ -10,11 +10,11 @@
 
 // This constant is provided by the 10.7 SDK. For 10.6 SDK and earlier, it is defined here so this will work with all SDKs.
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+//#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidCloseUndoGroupNotification";
 
-#endif
+//#endif
 
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
