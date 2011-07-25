@@ -10,11 +10,11 @@
 
 // This constant is provided by the 10.7 SDK. For 10.6 SDK and earlier, it is defined here so this will work with all SDKs.
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
+//#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 
 NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidCloseUndoGroupNotification";
 
-#endif
+//#endif
 
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
@@ -59,36 +59,39 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 	// valid task is submitted. Unlike NSUndoManger it is safe to merely open and then close a group with no tasks submitted
 	// - the empty group is (optionally) removed automatically. (see -endUndoGrouping)
 	
-	GCUndoGroup* newGroup = [[GCUndoGroup alloc] init];
-	
-	THROW_IF_FALSE( newGroup != nil, @"unable to create new group");
-	
-	if( mGroupLevel == 0 )
-	{
-		if([self isUndoing])
-			[self pushGroupOntoRedoStack:newGroup];
-		else
-			[self pushGroupOntoUndoStack:newGroup];
-	}
-	else
-	{
-		THROW_IF_FALSE( mOpenGroupRef != nil, @"internal inconsistency - group level was > 0 but no open group was found");
-		
-		[[self currentGroup] addTask:newGroup];
-	}
-	
-	mOpenGroupRef = newGroup;
-	[newGroup release];
-	
-	if(![self isUndoing] && mGroupLevel > 0 )
-		[self checkpoint];
-	
-	++mGroupLevel;
-	
-	NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
-	[notificationCenter postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
+    // only create group if undo registration is enabled
+    // otherwise groups get created when undo registration is disabled and causes GUI to say document is "Edited" on Lion
+    if ([self isUndoRegistrationEnabled]) {
+        GCUndoGroup* newGroup = [[GCUndoGroup alloc] init];
+        
+        THROW_IF_FALSE( newGroup != nil, @"unable to create new group");
+        
+        if( mGroupLevel == 0 )
+        {
+            if([self isUndoing])
+                [self pushGroupOntoRedoStack:newGroup];
+            else
+                [self pushGroupOntoUndoStack:newGroup];
+        }
+        else
+        {
+            THROW_IF_FALSE( mOpenGroupRef != nil, @"internal inconsistency - group level was > 0 but no open group was found");
+            
+            [[self currentGroup] addTask:newGroup];
+        }
+        
+        mOpenGroupRef = newGroup;
+        [newGroup release];
+        
+        if(![self isUndoing] && mGroupLevel > 0 )
+            [self checkpoint];
+        
+        ++mGroupLevel;
+        
+        NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+        [notificationCenter postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
+    }
 }
-
 
 
 - (void)				endUndoGrouping
