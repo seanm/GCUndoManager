@@ -24,7 +24,7 @@
 - (void)				forwardInvocation:(NSInvocation*) inv;
 - (NSMethodSignature*)	methodSignatureForSelector:(SEL) selector;
 - (BOOL)				respondsToSelector:(SEL) selector;
-- (void)				_gcum_setTarget:(id) target;
+- (void)				gcum_setTarget:(id) target;
 
 @end
 
@@ -433,7 +433,7 @@
 	
 	if( mProxy )
 	{
-		[mProxy _gcum_setTarget:target];
+		[mProxy gcum_setTarget:target];
 		return mProxy;
 	}
 	else
@@ -1488,7 +1488,7 @@
 }
 
 
-- (void)				_gcum_setTarget:(id) target
+- (void)				gcum_setTarget:(id) target
 {
 	THROW_IF_FALSE( target != self, @"bizarre internal inconsistency - attempt to set proxy as its own target");
 	
