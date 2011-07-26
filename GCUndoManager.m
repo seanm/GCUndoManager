@@ -46,39 +46,44 @@
 
 - (void)				beginUndoGrouping
 {
-	// starts a new group. If there's an existing one open, this is nested inside it. A group must be opened before any undo tasks can be
-	// accumulated. If groupsByEvent is YES, a group will be automatically opened and closed around the main event loop when the first
-	// valid task is submitted. Unlike NSUndoManger it is safe to merely open and then close a group with no tasks submitted
-	// - the empty group is (optionally) removed automatically. (see -endUndoGrouping)
-	
-	GCUndoGroup* newGroup = [[GCUndoGroup alloc] init];
-	
-	THROW_IF_FALSE( newGroup != nil, @"unable to create new group");
-	
-	if( mGroupLevel == 0 )
+	// only create group if undo registration is enabled,
+	// otherwise groups get created when undo registration is disabled and causes GUI to say document is "Edited" on Lion.
+	if([self isUndoRegistrationEnabled])
 	{
-		if([self isUndoing])
-			[self pushGroupOntoRedoStack:newGroup];
-		else
-			[self pushGroupOntoUndoStack:newGroup];
-	}
-	else
-	{
-		THROW_IF_FALSE( mOpenGroupRef != nil, @"internal inconsistency - group level was > 0 but no open group was found");
+		// starts a new group. If there's an existing one open, this is nested inside it. A group must be opened before any undo tasks can be
+		// accumulated. If groupsByEvent is YES, a group will be automatically opened and closed around the main event loop when the first
+		// valid task is submitted. Unlike NSUndoManger it is safe to merely open and then close a group with no tasks submitted
+		// - the empty group is (optionally) removed automatically. (see -endUndoGrouping)
 		
-		[[self currentGroup] addTask:newGroup];
+		GCUndoGroup* newGroup = [[GCUndoGroup alloc] init];
+		
+		THROW_IF_FALSE( newGroup != nil, @"unable to create new group");
+		
+		if( mGroupLevel == 0 )
+		{
+			if([self isUndoing])
+				[self pushGroupOntoRedoStack:newGroup];
+			else
+				[self pushGroupOntoUndoStack:newGroup];
+		}
+		else
+		{
+			THROW_IF_FALSE( mOpenGroupRef != nil, @"internal inconsistency - group level was > 0 but no open group was found");
+			
+			[[self currentGroup] addTask:newGroup];
+		}
+		
+		mOpenGroupRef = newGroup;
+		[newGroup release];
+		
+		if(![self isUndoing] && mGroupLevel > 0 )
+			[self checkpoint];
+		
+		++mGroupLevel;
+		
+		NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+		[notificationCenter postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
 	}
-	
-	mOpenGroupRef = newGroup;
-	[newGroup release];
-	
-	if(![self isUndoing] && mGroupLevel > 0 )
-		[self checkpoint];
-	
-	++mGroupLevel;
-	
-	NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
-	[notificationCenter postNotificationName:NSUndoManagerDidOpenUndoGroupNotification object:self];
 }
 
 
