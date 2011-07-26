@@ -8,14 +8,6 @@
 
 #import "GCUndoManager.h"
 
-// This constant is provided by the 10.7 SDK. For 10.6 SDK and earlier, it is defined here so this will work with all SDKs.
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
-
-NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidCloseUndoGroupNotification";
-
-#endif
-
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
 // method, so subclasses still work when -forwardInvocaton: is overridden.
@@ -164,11 +156,19 @@ NSString* const NSUndoManagerDidCloseUndoGroupNotification = @"NSUndoManagerDidC
 		
 		// this notification is new for 10.7 - according to inside info, NSUndoManager only posts it while doing, not otherwise
 		// see: https://devforums.apple.com/thread/110036?tstart=0
+		// GCUndoManager sends this notification as well. This is necessary for NSDocument compatibility on 10.7, but may be used on
+		// earlier systems if you wish. The notification is only sent while collecting tasks, not when undoing or redoing.
 		
 		if([self undoManagerState] == kGCUndoCollectingTasks)
 		{
+			// If the deployment target is 10.7 or later, the NSUndoManagerDidCloseUndoGroupNotification global is available,
+			// otherwise we just rely on it's string value, which is unlikely to change.
 			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
 			[notificationCenter postNotificationName:NSUndoManagerDidCloseUndoGroupNotification object:self];
+#else
+			[notificationCenter postNotificationName:@"NSUndoManagerDidCloseUndoGroupNotification" object:self];
+#endif
 		}
 	}
 }
