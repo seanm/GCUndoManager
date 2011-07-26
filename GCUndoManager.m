@@ -1025,7 +1025,7 @@
 			else
 				selString = @"<subgroup>";
 			
-			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%d: %@)", [topGroup actionName], ++suffix, selString ]];
+			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], ++suffix, selString ]];
 			[self pushGroupOntoUndoStack:newTaskGroup];
 			[newTaskGroup release];
 		}
@@ -1094,7 +1094,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ g-level = %d, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
+	return [NSString stringWithFormat:@"%@ g-level = %lu, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
 }
 
 
@@ -1142,7 +1142,7 @@
 
 - (GCUndoTask*)			taskAtIndex:(NSUInteger) indx
 {
-	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%d) in group %@", indx, self );
+	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%lu) in group %@", indx, self );
 	
 	return [[self tasks] objectAtIndex:indx];
 }
@@ -1314,7 +1314,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ '%@' %d tasks: %@", [super description], [self actionName], [mTasks count], mTasks];
+	return [NSString stringWithFormat:@"%@ '%@' %lu tasks: %@", [super description], [self actionName], [mTasks count], mTasks];
 }
 
 @end
