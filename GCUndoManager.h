@@ -51,7 +51,7 @@ GCUndoTaskCoalescingKind;
 	NSInteger			mGroupLevel;			// current grouping level, 0 = no groups open
 	NSUInteger			mLevelsOfUndo;			// how many undo actions are added before old ones are discarded, 0 = unlimited
 	NSInteger			mEnableLevel;			// enable ref count, 0 = enabled.
-	NSUInteger			mChangeCount;			// count of changes (submitting any task increments this)
+	NSInteger			mChangeCount;			// count of changes (submitting any task increments this)
 	GCUndoManagerState	mState;					// current undo manager state
 	GCUndoTaskCoalescingKind mCoalKind;			// coalescing behaviour - match on most recent task or all tasks in group
 	BOOL				mGroupsByEvent;			// YES if automatic grouping occurs for the main loop event cycle
@@ -147,7 +147,7 @@ GCUndoTaskCoalescingKind;
 
 // getting/resetting change count
 
-- (NSUInteger)			changeCount;
+- (NSInteger)			changeCount;
 - (void)				resetChangeCount;
 
 #pragma mark -

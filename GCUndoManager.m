@@ -648,7 +648,7 @@
 }
 
 
-- (NSUInteger)			changeCount
+- (NSInteger)			changeCount
 {
 	// return the change count, which is roughly the number of individual tasks accepted. However, do not rely on the exact value,
 	// instead you can compare it before and after, and if it has changed, then something was added. This could be used to e.g.
