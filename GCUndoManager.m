@@ -99,6 +99,7 @@
 		
 		--mGroupLevel;
 		
+		THROW_IF_FALSE( mGroupLevel >= 0, @"group level is negative - internal inconsistency");
 		THROW_IF_FALSE( mOpenGroupRef != nil, @"bad group state - attempt to close a nested group with no group open");
 		
 		if( mGroupLevel == 0 )
@@ -267,10 +268,10 @@
 
 
 
-- (NSUInteger)			groupingLevel
+- (NSInteger)			groupingLevel
 {
 #if CALCULATE_GROUPING_LEVEL
-	NSUInteger		level = 0;
+	NSInteger		level = 0;
 	GCUndoGroup*	group = [self currentGroup];
 	
 	while( group )
@@ -1094,7 +1095,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ g-level = %lu, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
+	return [NSString stringWithFormat:@"%@ g-level = %ld, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
 }
 
 

@@ -68,7 +68,7 @@ GCUndoTaskCoalescingKind;
 - (void)				beginUndoGrouping;
 - (void)				endUndoGrouping;
 
-- (NSUInteger)			groupingLevel;
+- (NSInteger)			groupingLevel;
 - (BOOL)				groupsByEvent;
 - (void)				setGroupsByEvent:(BOOL) groupByEvent;
 
