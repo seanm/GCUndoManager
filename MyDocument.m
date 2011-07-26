@@ -3,7 +3,7 @@
 //  GCDrawKit
 //
 //  Created by graham on 5/12/09.
-//  Copyright 2009 Apptree.net. All rights reserved.
+//  Copyright 2009-2011 Apptree.net. All rights reserved.
 //
 
 #import "MyDocument.h"
@@ -39,6 +39,8 @@
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
 {
+	(void)typeName;
+	
     // Insert code here to write your document to data of the specified type. If the given outError != NULL, ensure that you set *outError when returning nil.
 
     // You can also choose to override -fileWrapperOfType:error:, -writeToURL:ofType:error:, or -writeToURL:ofType:forSaveOperation:originalContentsURL:error: instead.
@@ -53,6 +55,9 @@
 
 - (BOOL)readFromData:(NSData *)data ofType:(NSString *)typeName error:(NSError **)outError
 {
+	(void)data;
+	(void)typeName;
+	
     // Insert code here to read your document from the given data of the specified type.  If the given outError != NULL, ensure that you set *outError when returning NO.
 
     // You can also choose to override -readFromFileWrapper:ofType:error: or -readFromURL:ofType:error: instead. 
@@ -92,6 +97,8 @@
 
 - (IBAction)		removeAllActionsAction:(id) sender
 {
+	(void)sender;
+	
 	[[self undoManager] removeAllActions];
 }
 
@@ -129,12 +136,16 @@
 
 - (IBAction)		logUMDescription:(id) sender
 {
+	(void)sender;
+	
 	NSLog(@"%@", [[self undoManager] description]);
 }
 
 
 - (IBAction)		explodeUndoAction:(id) sender
 {
+	(void)sender;
+	
 	if([[self undoManager] respondsToSelector:@selector(explodeTopUndoAction)])
 		[(GCUndoManager*)[self undoManager] explodeTopUndoAction];
 	

@@ -1495,5 +1495,4 @@
 	mNextTarget = target;
 }
 
-@end;
-
+@end

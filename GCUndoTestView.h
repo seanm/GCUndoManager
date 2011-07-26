@@ -3,7 +3,7 @@
 //  GCDrawKit
 //
 //  Created by graham on 5/12/09.
-//  Copyright 2009 Apptree.net. All rights reserved.
+//  Copyright 2009-2011 Apptree.net. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

@@ -3,7 +3,7 @@
 //  GCDrawKit
 //
 //  Created by graham on 5/12/09.
-//  Copyright 2009 Apptree.net. All rights reserved.
+//  Copyright 2009-2011 Apptree.net. All rights reserved.
 //
 
 #import "GCUndoTestView.h"
@@ -31,16 +31,16 @@
 	NSRectFill(dirtyRect);
 	
 	[[NSColor lightGrayColor] set];
-	NSFrameRectWithWidth([self bounds], 1.0);
+	NSFrameRectWithWidth([self bounds], (CGFloat)1.0);
 	
 	[[self draggedBoxColour] set];
 	NSRectFill(draggedBox);
 
 	[[NSColor blackColor] set];
-	NSFrameRectWithWidth(draggedBox, 0.5);
+	NSFrameRectWithWidth(draggedBox, (CGFloat)0.5);
 	
 	NSRect sizeRect = NSMakeRect( NSMaxX( draggedBox ) - 10, NSMaxY( draggedBox ) -10, 10, 10 );
-	NSFrameRectWithWidth( sizeRect, 0.5);
+	NSFrameRectWithWidth( sizeRect, (CGFloat)0.5);
 }
 
 
@@ -95,6 +95,8 @@
 
 - (void)	mouseUp:(NSEvent*) event
 {
+	(void)event;
+	
 	[[self undoManager] endUndoGrouping];
 }
 
