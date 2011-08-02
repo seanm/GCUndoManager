@@ -108,6 +108,10 @@ GCUndoTaskCoalescingKind;
 - (NSString*)			undoMenuTitleForUndoActionName:(NSString*) actionName;
 - (NSString*)			redoMenuTitleForUndoActionName:(NSString*) actionName;
 
+// for supporting the Versions Browser in Mac OS 10.7
+
+- (void)                setActionIsDiscardable:(BOOL) discardable;
+
 // registering actions with the undo manager
 
 - (id)					prepareWithInvocationTarget:(id) target;
@@ -211,13 +215,14 @@ GCUndoTaskCoalescingKind;
 
 // undo groups can contain any number of other groups or concrete tasks. The top level actions in the undo/redo stacks always consist
 // of groups, even if they only contain a single concrete task. The group also provides the storage for the action name associated with
-// the action. Groups own their tasks.
+// the action, and whether or not the group is discardable. Groups own their tasks.
 
 @interface GCUndoGroup	: GCUndoTask
 {
 @private
 	NSString*			mActionName;
 	NSMutableArray*		mTasks;
+	BOOL                mActionIsDiscardable;
 }
 
 - (void)				addTask:(GCUndoTask*) aTask;
@@ -230,6 +235,13 @@ GCUndoTaskCoalescingKind;
 - (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um;
 - (void)				setActionName:(NSString*) name;
 - (NSString*)			actionName;
+
+//  set the latest undo action to discardable if it may be safely discarded when a document can not be saved for any reason. 
+//  an example might be an undo action that changes the viewable area of a document.   To find out if an undo group contains only
+//  discardable actions, look for the NSUndoManagerGroupIsDiscardableKey in the userInfo dictionary of the
+//  NSUndoManagerDidCloseUndoGroupNotification.
+- (void)                setActionIsDiscardable:(BOOL) discardable;
+- (BOOL)                actionIsDiscardable;
 
 @end
 
