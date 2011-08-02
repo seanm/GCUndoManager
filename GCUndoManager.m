@@ -171,7 +171,13 @@
 			GCUndoGroup* topGroup = [self peekUndo] ;
 			NSDictionary* userInfo = nil ;
 			if ([topGroup actionIsDiscardable]) {
+				// If the deployment target is 10.7 or later, the NSUndoManagerGroupIsDiscardableKey global is available,
+				// otherwise we just rely on it's string value, which is unlikely to change.
+#if MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
 				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:NSUndoManagerGroupIsDiscardableKey] ;
+#else
+				userInfo = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES] forKey:@"NSUndoManagerGroupIsDiscardableKey"] ;
+#endif
 			}
 
 			NSNotificationCenter* notificationCenter = [NSNotificationCenter defaultCenter];
