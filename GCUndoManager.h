@@ -100,6 +100,24 @@ GCUndoTaskCoalescingKind;
 
 // undo menu management
 
+// sets the action name of the receiver's current undo group
+// setting the action name should be done as a high-level "finishing off"
+// work within the controller layer of the MVC layering.  usually, the
+// action name is set at the end of an action method (I believe it's no
+// coincidence that the UM uses the term 'action name' to suggest a
+// connection with an 'action method').  example:
+// - (IBAction)		someAction:(id) sender
+// {
+//      [dataModel doThis];	 // undoable
+//      [dataModel doThat];	 // undoable
+//      [[self undoManager] setActionName:[sender title]];
+// }
+// Even if -doThis and -doThat set action names, these are ignored
+// because the last action name set is the one that "sticks".  also, in this
+// example I use the sender's title as the action name, which works great for
+// menu and button actions, and means that the action is automatically
+// localised along with the UI.  for actions triggered by other elements, a
+// fixed localisable string does the job.
 - (void)				setActionName:(NSString*) actionName;
 - (NSString*)			undoActionName;
 - (NSString*)			redoActionName;
@@ -230,7 +248,7 @@ GCUndoTaskCoalescingKind;
 - (GCConcreteUndoTask*)	lastTaskIfConcrete;
 - (NSArray*)			tasks;
 - (NSArray*)			tasksWithTarget:(id) target selector:(SEL) selector;
-- (BOOL)				isEmpty;
+- (BOOL)				hasTask;
 
 - (void)				removeTasksWithTarget:(id) aTarget undoManager:(GCUndoManager*) um;
 - (void)				setActionName:(NSString*) name;
