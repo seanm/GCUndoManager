@@ -29,6 +29,9 @@ typedef enum
 }
 GCUndoTaskCoalescingKind;
 
+extern NSString * const GCUndoManagerWillDropUndoActionNotification;
+extern NSString * const GCUndoManagerWillDropRedoActionNotification;
+extern NSString * const GCUndoManagerActionKey;
 
 @class GCUndoGroup, GCUndoManagerProxy, GCConcreteUndoTask;
 

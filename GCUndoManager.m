@@ -12,6 +12,9 @@
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
 // method, so subclasses still work when -forwardInvocaton: is overridden.
 
+NSString * const GCUndoManagerWillDropUndoActionNotification = @"GCUndoManagerWillDropUndoActionNotification";
+NSString * const GCUndoManagerWillDropRedoActionNotification = @"GCUndoManagerWillDropRedoActionNotification";
+NSString * const GCUndoManagerActionKey = @"GCUndoManagerActionKey";
 
 @interface GCUndoManagerProxy : NSProxy
 {
@@ -145,7 +148,7 @@
 					mIsRemovingTargets = YES;
 					
 					while([self numberOfUndoActions] > [self levelsOfUndo])
-						[mUndoStack removeObjectAtIndex:0];
+                        [self dropOldestUndoAction];
 					
 					mIsRemovingTargets = NO;
 				}
@@ -317,6 +320,24 @@
 
 
 
+- (void)                dropOldestUndoAction
+{
+    NSDictionary * userInfo = [NSDictionary dictionaryWithObject:[mUndoStack objectAtIndex:0] forKey:GCUndoManagerActionKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:GCUndoManagerWillDropUndoActionNotification object:self userInfo:userInfo];
+    [mUndoStack removeObjectAtIndex:0];
+}
+
+
+
+- (void)                dropOldestRedoAction
+{
+    NSDictionary * userInfo = [NSDictionary dictionaryWithObject:[mRedoStack objectAtIndex:0] forKey:GCUndoManagerActionKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:GCUndoManagerWillDropRedoActionNotification object:self userInfo:userInfo];
+    [mRedoStack removeObjectAtIndex:0];
+}
+
+
+
 - (NSUInteger)			levelsOfUndo
 {
 	return mLevelsOfUndo;
@@ -335,10 +356,10 @@
 		mIsRemovingTargets = YES;
 		
 		while([self numberOfUndoActions] > levels)
-			[mUndoStack removeObjectAtIndex:0];
+            [self dropOldestUndoAction];
 
 		while([self numberOfRedoActions] > levels)
-			[mRedoStack removeObjectAtIndex:0];
+            [self dropOldestRedoAction];
 		
 		mIsRemovingTargets = NO;
 	}
