@@ -12,8 +12,6 @@
 // 2011/01/11 - fix to ensure submitting tasks in response to a checkpoint notification is correctly handled
 // 2011/07/08 - added NSUndoManagerDidCloseUndoGroupNotification for 10.7 (Lion) compatibility
 
-#import <Cocoa/Cocoa.h>
-
 // internal undo manager state is one of these constants
 
 typedef enum
