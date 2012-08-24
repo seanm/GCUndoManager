@@ -35,8 +35,7 @@ GCUndoTaskCoalescingKind;
 @class GCUndoGroup, GCUndoManagerProxy, GCConcreteUndoTask;
 
 // the undo manager is a public-API compatible replacement for NSUndoManager but features a simpler internal implementation, some bug fixes and less
-// fragility than NSUndoManager. It can be used with NSDocument's -setUndoManager: method (cast to id or NSUndoManager). However its compatibility with
-// Core Data is unknown and untested at this time. See further notes at the end of this file.
+// fragility than NSUndoManager. It can be used with NSDocument's -setUndoManager: method (cast to id or NSUndoManager*). It is compatible with Core Data, traditional retain-release, and garbage collection.
 
 
 @interface GCUndoManager : NSObject
