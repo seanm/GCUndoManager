@@ -1061,7 +1061,7 @@
 			else
 				selString = @"<subgroup>";
 			
-			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], ++suffix, selString ]];
+			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], (unsigned long)++suffix, selString ]];
 			[self pushGroupOntoUndoStack:newTaskGroup];
 			[newTaskGroup release];
 		}
@@ -1130,7 +1130,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ g-level = %ld, state = %d, u-stack: %@, r-stack: %@", [super description], [self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
+	return [NSString stringWithFormat:@"%@ g-level = %ld, state = %d, u-stack: %@, r-stack: %@", [super description], (long)[self groupingLevel], [self undoManagerState], [self undoStack], [self redoStack]];
 }
 
 
@@ -1157,7 +1157,7 @@
 {
 	// abstract class - override to implement
 	
-	NSAssert( NO, @"-perform must be overridden");
+	NSAssert( NO, @"-perform must be overridden", nil);
 }
 
 @end
@@ -1178,7 +1178,7 @@
 
 - (GCUndoTask*)			taskAtIndex:(NSUInteger) indx
 {
-	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%lu) in group %@", indx, self );
+	THROW_IF_FALSE2( indx < [[self tasks] count], @"invalid task index (%lu) in group %@", (unsigned long)indx, self );
 	
 	return [[self tasks] objectAtIndex:indx];
 }
@@ -1364,7 +1364,7 @@
 
 - (NSString*)			description
 {
-	return [NSString stringWithFormat:@"%@ '%@' %lu tasks: %@", [super description], [self actionName], [mTasks count], mTasks];
+	return [NSString stringWithFormat:@"%@ '%@' %lu tasks: %@", [super description], [self actionName], (unsigned long)[mTasks count], mTasks];
 }
 
 @end
