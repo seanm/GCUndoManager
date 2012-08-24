@@ -3,7 +3,7 @@
 //  GCDrawKit
 //
 //  Created by graham on 4/12/09.
-//  Copyright 2009-2011 Apptree.net. All rights reserved.
+//  Copyright 2009-2012 Apptree.net. All rights reserved.
 //
 
 // VERSION HISTORY:
@@ -12,7 +12,7 @@
 // 2011/01/11 - fix to ensure submitting tasks in response to a checkpoint notification is correctly handled
 // 2011/07/08 - added NSUndoManagerDidCloseUndoGroupNotification for 10.7 (Lion) compatibility
 
-#import <Cocoa/Cocoa.h>
+#import <Foundation/Foundation.h>
 
 // internal undo manager state is one of these constants
 
