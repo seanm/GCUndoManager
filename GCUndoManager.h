@@ -272,8 +272,8 @@ GCUndoTaskCoalescingKind;
 {
 @private
 	NSInvocation*		mInvocation;
-	id					mTarget;
-	BOOL				mTargetRetained;
+	__weak id			mWeakTarget;
+	__strong id			mStrongTarget;
 }
 
 - (id)					initWithInvocation:(NSInvocation*) inv;

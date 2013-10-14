@@ -1393,7 +1393,7 @@
 			// the invocation retains its arguments and target if the target is set at this point. Therefore the target
 			// is set as nil and is managed independently. mTarget is set to the invocation's original target if set.
 			
-			mTarget = [inv target];
+			mWeakTarget = [inv target];
 			[inv setTarget:nil];
 			[inv retainArguments];
 			mInvocation = JX_RETAIN(inv);
@@ -1437,7 +1437,7 @@
 	// The invocation's internal target is nil. The target is not retained unless -setTarget:retained: is called with YES for <retained>.
 	
 	if( self )
-		mTarget = target;
+		mWeakTarget = target;
 	
 	return self;
 }
@@ -1447,20 +1447,22 @@
 {
 	// sets the invocation's target, optionally retaining it.
 	
-	if( retainIt )
-		JX_RETAIN(target);
+	JX_RELEASE(mStrongTarget);
 	
-	if( mTargetRetained )
-		JX_RELEASE(mTarget);
+	if( retainIt ) {
+		mStrongTarget = JX_RETAIN(target);
+	}
+	else {
+		mStrongTarget = nil;
+	}
 	
-	mTarget = target;
-	mTargetRetained = retainIt;
+	mWeakTarget = target;
 }
 
 
 - (id)					target
 {
-	return mTarget;
+	return mWeakTarget;
 }
 
 
@@ -1479,8 +1481,8 @@
 	
 	//NSLog(@"about to invoke task %@", self );
 	
-	if( mTarget )
-		[mInvocation invokeWithTarget:mTarget];
+	if( mWeakTarget )
+		[mInvocation invokeWithTarget:mWeakTarget];
 }
 
 
@@ -1501,8 +1503,7 @@
 {
 	JX_RELEASE(mInvocation);
 	
-	if( mTargetRetained )
-		JX_RELEASE(mTarget);
+	JX_RELEASE(mStrongTarget);
 	
 	[super dealloc];
 }
