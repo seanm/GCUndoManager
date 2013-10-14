@@ -17,7 +17,7 @@
     if (self)
 	{
 		draggedBox = NSMakeRect( 100, 100, 100, 100 );
-		dragBoxColour = [[NSColor redColor] retain];
+		dragBoxColour = JX_RETAIN([NSColor redColor]);
 	
 	}
     return self;
@@ -139,8 +139,8 @@
 {
 	[[[self undoManager] prepareWithInvocationTarget:self] setDraggedBoxColour:[self draggedBoxColour]];
 	
-	[aColour retain];
-	[dragBoxColour release];
+	JX_RETAIN(aColour);
+	JX_RELEASE(dragBoxColour);
 	dragBoxColour = aColour;
 	[self setNeedsDisplayInRect:draggedBox];
 	

@@ -9,6 +9,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "JXArcCompatibilityMacros.h"
+
 @class GCUndoTestView;
 
 

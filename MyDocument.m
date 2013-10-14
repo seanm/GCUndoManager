@@ -24,7 +24,7 @@
 		[um enableUndoTaskCoalescing];
 		[um setLevelsOfUndo:16];
 		[self setUndoManager:(id)um];
-		[um release];
+		JX_RELEASE(um);
 		[self setHasUndoManager:YES];
     }
     return self;
@@ -130,7 +130,7 @@
 	
 	[um setLevelsOfUndo:16];
 	[self setUndoManager:um];
-	[um release];
+	JX_RELEASE(um);
 }
 
 
