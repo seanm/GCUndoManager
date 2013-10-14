@@ -11,6 +11,7 @@
 // 2010/01/01 - fixes for Core Data, optional retaining of targets, and prevention of reentrancy when removing tasks
 // 2011/01/11 - fix to ensure submitting tasks in response to a checkpoint notification is correctly handled
 // 2011/07/08 - added NSUndoManagerDidCloseUndoGroupNotification for 10.7 (Lion) compatibility
+// 2013/10/14 - implemented ARC compatibility
 
 #import <Foundation/Foundation.h>
 
