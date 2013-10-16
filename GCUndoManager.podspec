@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
   s.name         = 'GCUndoManager'
   s.version      = '0.0.1'
-  s.license      = { :type => 'Unknown', :text => <<-LICENSE
+  s.license      = { :type => 'BSD', :text => <<-LICENSE
                       Copyright 2009-2012 Apptree.net. All rights reserved.
                     LICENSE
                    }
