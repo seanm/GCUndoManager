@@ -8,6 +8,8 @@
 
 #import "GCUndoManager.h"
 
+#import "JXArcCompatibilityMacros.h"
+
 // this proxy object is returned by -prepareWithInvocationTarget: if GCUM_USE_PROXY is 1. This provides a similar behaviour to NSUndoManager
 // on 10.6 so that a wider range of methods can be submitted as undo tasks. Unlike 10.6 however, it does not bypass um's -forwardInvocation:
 // method, so subclasses still work when -forwardInvocaton: is overridden.
@@ -74,7 +76,7 @@
 		}
 		
 		mOpenGroupRef = newGroup;
-		[newGroup release];
+		JX_RELEASE(newGroup);
 		
 		if(![self isUndoing] && mGroupLevel > 0 )
 			[self checkpoint];
@@ -367,8 +369,8 @@
 
 - (void)				setRunLoopModes:(NSArray*) modes
 {
-	[modes retain];
-	[mRunLoopModes release];
+	JX_RETAIN(modes);
+	JX_RELEASE(mRunLoopModes);
 	mRunLoopModes = modes;
 	
 	// n.b. if this is changed while a callback is pending, the new modes won't take effect until
@@ -491,7 +493,7 @@
 	{
 		THROW_IF_FALSE( invocation != nil, @"-forwardInvocation: was passed an invalid nil invocation" );
 		
-		GCConcreteUndoTask* task = [[[GCConcreteUndoTask alloc] initWithInvocation:invocation] autorelease];
+		GCConcreteUndoTask* task = JX_AUTORELEASE([[GCConcreteUndoTask alloc] initWithInvocation:invocation]);
 		[task setTarget:mNextTarget retained:[self retainsTargets]];
 		[self submitUndoTask:task];
 	}
@@ -510,7 +512,7 @@
 	{
 		THROW_IF_FALSE( selector != NULL, @"invalid (NULL) selector passed to registerUndoWithTarget:selector:object:" );
 		
-		GCConcreteUndoTask* task = [[[GCConcreteUndoTask alloc] initWithTarget:target selector:selector object:anObject] autorelease];
+		GCConcreteUndoTask* task = JX_AUTORELEASE([[GCConcreteUndoTask alloc] initWithTarget:target selector:selector object:anObject]);
 		[task setTarget:target retained:[self retainsTargets]];
 		[self submitUndoTask:task];
 	}
@@ -563,7 +565,7 @@
 			}
 		}
 		
-		[temp release];
+		JX_RELEASE(temp);
 		
 		temp = [[self redoStack] copy];
 		iter = [temp objectEnumerator];
@@ -580,7 +582,7 @@
 			}
 		}
 		
-		[temp release];
+		JX_RELEASE(temp);
 		
 		mIsRemovingTargets = NO;
 	}
@@ -949,7 +951,7 @@
 	
 	if([mUndoStack count] > 0 )
 	{
-		GCUndoGroup* group = [[[self peekUndo] retain] autorelease];
+		GCUndoGroup* group = JX_RETAIN(JX_AUTORELEASE([self peekUndo]));
 		[mUndoStack removeLastObject];
 		
 		return group;
@@ -965,7 +967,7 @@
 
 	if([mRedoStack count] > 0 )
 	{
-		GCUndoGroup* group = [[[self peekRedo] retain] autorelease];
+		GCUndoGroup* group = JX_RETAIN(JX_AUTORELEASE([self peekRedo]));
 		[mRedoStack removeLastObject];
 		
 		return group;
@@ -1063,7 +1065,7 @@
 			
 			[newTaskGroup setActionName:[NSString stringWithFormat:@"%@ (%lu: %@)", [topGroup actionName], (unsigned long)++suffix, selString ]];
 			[self pushGroupOntoUndoStack:newTaskGroup];
-			[newTaskGroup release];
+			JX_RELEASE(newTaskGroup);
 		}
 	}
 }
@@ -1080,7 +1082,7 @@
 		mRedoStack = [[NSMutableArray alloc] init];
 		
 		mGroupsByEvent = YES;
-		mRunLoopModes = [[NSArray arrayWithObject:NSDefaultRunLoopMode] retain];
+		mRunLoopModes = JX_RETAIN([NSArray arrayWithObject:NSDefaultRunLoopMode]);
 		mAutoDeleteEmptyGroups = YES;
 		mCoalKind = kGCCoalesceLastTask;
 		
@@ -1098,11 +1100,13 @@
 {
 	[[NSRunLoop mainRunLoop] cancelPerformSelectorsWithTarget:self];
 	
-	[mUndoStack release];
-	[mRedoStack release];
-	[mRunLoopModes release];
-	[mProxy release];
+#if (JX_HAS_ARC == 0)
+	JX_RELEASE(mUndoStack);
+	JX_RELEASE(mRedoStack);
+	JX_RELEASE(mRunLoopModes);
+	JX_RELEASE(mProxy);
 	[super dealloc];
+#endif
 }
 
 
@@ -1284,7 +1288,7 @@
 		}
 	}
 	
-	[temp release];
+	JX_RELEASE(temp);
 }
 
 
@@ -1293,8 +1297,8 @@
 {
 	// sets the group's action name. In general this is automatically handled by the owning undo manager
 	
-	[name retain];
-	[mActionName release];
+	JX_RETAIN(name);
+	JX_RELEASE(mActionName);
 	mActionName = name;
 }
 
@@ -1352,14 +1356,16 @@
 
 
 
+#if (JX_HAS_ARC == 0)
 - (void)				dealloc
 {
 	//NSLog(@"deallocating undo group %@", self );
 	
-	[mTasks release];
-	[mActionName release];
+	JX_RELEASE(mTasks);
+	JX_RELEASE(mActionName);
 	[super dealloc];
 }
+#endif
 
 
 - (NSString*)			description
@@ -1387,14 +1393,14 @@
 			// the invocation retains its arguments and target if the target is set at this point. Therefore the target
 			// is set as nil and is managed independently. mTarget is set to the invocation's original target if set.
 			
-			mTarget = [inv target];
+			mWeakTarget = [inv target];
 			[inv setTarget:nil];
 			[inv retainArguments];
-			mInvocation = [inv retain];
+			mInvocation = JX_RETAIN(inv);
 		}
 		else
 		{
-			[self autorelease];
+			JX_AUTORELEASE(self);
 			self = nil;
 		}
 	}
@@ -1414,10 +1420,16 @@
 	
 	[inv setSelector:selector];
 	
+#if JX_HAS_ARC
+	__unsafe_unretained
+#endif
+	id tempObject = object;
+	
 	// don't set the argument if the selector doesn't take one
 	
-	if([sig numberOfArguments] >= 3 )
-		[inv setArgument:&object atIndex:2];
+	if([sig numberOfArguments] >= 3 ) {
+		[inv setArgument:&tempObject atIndex:2];
+	}
 	
 	self = [self initWithInvocation:inv];
 	
@@ -1425,7 +1437,7 @@
 	// The invocation's internal target is nil. The target is not retained unless -setTarget:retained: is called with YES for <retained>.
 	
 	if( self )
-		mTarget = target;
+		mWeakTarget = target;
 	
 	return self;
 }
@@ -1435,20 +1447,22 @@
 {
 	// sets the invocation's target, optionally retaining it.
 	
-	if( retainIt )
-		[target retain];
+	JX_RELEASE(mStrongTarget);
 	
-	if( mTargetRetained )
-		[mTarget release];
+	if( retainIt ) {
+		mStrongTarget = JX_RETAIN(target);
+	}
+	else {
+		mStrongTarget = nil;
+	}
 	
-	mTarget = target;
-	mTargetRetained = retainIt;
+	mWeakTarget = target;
 }
 
 
 - (id)					target
 {
-	return mTarget;
+	return mWeakTarget;
 }
 
 
@@ -1467,8 +1481,8 @@
 	
 	//NSLog(@"about to invoke task %@", self );
 	
-	if( mTarget )
-		[mInvocation invokeWithTarget:mTarget];
+	if( mWeakTarget )
+		[mInvocation invokeWithTarget:mWeakTarget];
 }
 
 
@@ -1478,22 +1492,22 @@
 
 - (id)					init
 {
-	[self autorelease];
+	JX_AUTORELEASE(self);
 	return nil;
 }
 
 
 
+#if (JX_HAS_ARC == 0)
 - (void)				dealloc
 {
-	[mInvocation release];
+	JX_RELEASE(mInvocation);
 	
-	if( mTargetRetained )
-		[mTarget release];
+	JX_RELEASE(mStrongTarget);
 	
 	[super dealloc];
 }
-
+#endif
 
 - (NSString*)			description
 {

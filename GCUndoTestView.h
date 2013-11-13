@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "JXArcCompatibilityMacros.h"
+
 // n.b for simplicty this includes a very crude data model of a draggable/resizeable box. This is not a good example of MVC separation, as
 // the purpose of it is merely to allow testing of the undo manager code.
 
