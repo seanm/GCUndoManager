@@ -73,7 +73,8 @@
 
 - (IBAction)		enableUndoAction:(id) sender
 {
-	if([sender state] == NSOnState )
+	NSCellStateValue state = [(NSButton*)sender state];
+	if(state == NSOnState )
 		[[self undoManager] enableUndoRegistration];
 	else
 		[[self undoManager] disableUndoRegistration];
@@ -82,7 +83,8 @@
 
 - (IBAction)		enableCoalescingAction:(id) sender
 {
-	if([sender state] == NSOnState )
+	NSCellStateValue state = [(NSButton*)sender state];
+	if(state == NSOnState )
 		[(GCUndoManager*)[self undoManager] enableUndoTaskCoalescing];
 	else
 		[(GCUndoManager*)[self undoManager] disableUndoTaskCoalescing];
@@ -91,7 +93,8 @@
 
 - (IBAction)		enableEventGroupingAction:(id) sender
 {
-	[[self undoManager] setGroupsByEvent:[sender state]];
+	NSCellStateValue state = [(NSButton*)sender state];
+	[[self undoManager] setGroupsByEvent:(state == NSOnState)];
 }
 
 
